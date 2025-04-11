@@ -1,0 +1,418 @@
+/* Base Styles and Variables */
+:root {
+    --primary: #8a2be2;
+    --primary-light: #9370db;
+    --primary-dark: #4b0082;
+    --accent: #00bfa6;
+    --dark: #1a1a1a;
+    --gray-800: #1F2937;
+    --gray-600: #4B5563;
+    --gray-400: #6B7280;
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+/* Modern Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* Utility Classes */
+.connected {
+    background-color: #1a1a1a;
+    color: #60a5fa;
+}
+
+/* Card Animations */
+.service-card {
+    background: rgba(31, 41, 55, 0.7);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(138, 43, 226, 0.2);
+    border-radius: 12px;
+    padding: 1.5rem;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    perspective: 1000px;
+    transform-style: preserve-3d;
+}
+
+.service-card:hover {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 10px 30px rgba(138, 43, 226, 0.2);
+    border-color: var(--primary);
+    background: rgba(31, 41, 55, 0.8);
+}
+
+/* Text Effects */
+.gradient-text {
+    background: linear-gradient(45deg, var(--primary), var(--accent));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+/* Add to your existing styles */
+.copy-success {
+    animation: fadeOut 2s forwards;
+}
+
+@keyframes fadeOut {
+    0% { opacity: 1; }
+    70% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in {
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+    width: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--gray-800);
+    border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--primary);
+    border-radius: 5px;
+    border: 2px solid var(--gray-800);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-light);
+}
+
+/* PAN Verification Styles */
+.pan-verification-section input:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(138, 43, 226, 0.5);
+}
+
+.pan-verification-result {
+    transition: all 0.3s ease;
+}
+
+.pan-details {
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+/* File upload button styles */
+.file-upload-section .file-upload-button {
+    transition: all 0.3s ease;
+}
+
+.file-upload-section .file-upload-button:hover:not(.cursor-not-allowed) {
+    background-color: #4B5563;
+}
+
+/* Payment button pulse animation */
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(138, 43, 226, 0.7); }
+    70% { box-shadow: 0 0 0 10px rgba(138, 43, 226, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(138, 43, 226, 0); }
+}
+
+.payment-ready {
+    animation: pulse 2s infinite;
+}
+
+/* Smooth Transitions */
+.transition-all {
+    transition: all 0.3s ease-in-out;
+}
+
+/* Smooth Scroll */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Card Hover Effects */
+.service-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    perspective: 1000px;
+    transform-style: preserve-3d;
+}
+
+.service-card:hover {
+    transform: translateY(-5px) rotateX(5deg) rotateY(5deg);
+    box-shadow: 0 20px 40px rgba(138, 43, 226, 0.2);
+}
+
+/* Button Hover Animation */
+button {
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: white;
+    border: none;
+    box-shadow: 0 4px 15px rgba(138, 43, 226, 0.3);
+}
+
+button:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 6px 20px rgba(138, 43, 226, 0.4);
+    background: linear-gradient(135deg, var(--primary-light), var(--primary));
+}
+
+button:active {
+    transform: translateY(1px);
+}
+
+button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    transform: translateX(-100%);
+    transition: transform 0.6s ease;
+}
+
+button:hover::before {
+    transform: translateX(100%);
+}
+
+/* Network Badge Animation */
+#networkBadge {
+    background: linear-gradient(135deg, rgba(138, 43, 226, 0.1), rgba(147, 112, 219, 0.1));
+    border: 1px solid rgba(138, 43, 226, 0.2);
+    backdrop-filter: blur(4px);
+    padding: 0.5rem 1rem;
+    border-radius: 9999px;
+    font-weight: 500;
+    animation: slideInFade 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Alert Animations */
+#errorAlert, #successAlert {
+    border-radius: 10px;
+    padding: 1rem;
+    margin: 1rem 0;
+    animation: slideInFade 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: var(--shadow-md);
+}
+
+#successAlert {
+    background: rgba(138, 43, 226, 0.1);
+    border: 1px solid rgba(138, 43, 226, 0.2);
+    color: var(--primary);
+    box-shadow: var(--shadow-md);
+}
+
+#errorAlert {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    color: #EF4444;
+}
+
+/* Enhanced Input Fields */
+input {
+    background: rgba(31, 41, 55, 0.7);
+    border: 1px solid rgba(138, 43, 226, 0.2);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    transition: all 0.3s ease;
+    color: white;
+}
+
+input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(138, 43, 226, 0.25);
+    background: rgba(31, 41, 55, 0.8);
+}
+
+/* Refined Animations */
+@keyframes slideInFade {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes pulseGlow {
+    0% {
+        box-shadow: 0 0 0 0 rgba(138, 43, 226, 0.4);
+    }
+    70% {
+        box-shadow: 0 0 0 15px rgba(138, 43, 226, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(138, 43, 226, 0);
+    }
+}
+
+/* Loading States */
+.loading {
+    position: relative;
+}
+
+.loading::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, 
+        transparent,
+        rgba(255, 255, 255, 0.05),
+        transparent
+    );
+    animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+/* Document table styles */
+.document-table-container {
+    overflow-x: auto;
+    margin-top: 2rem;
+}
+
+.document-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    border-radius: 0.5rem;
+    overflow: hidden;
+}
+
+.document-table th,
+.document-table td {
+    padding: 1rem 1.5rem;
+    text-align: left;
+}
+
+.document-table th {
+    background-color: rgba(138, 43, 226, 0.1);
+    font-weight: 600;
+    color: var(--primary);
+}
+
+.document-table td {
+    background-color: rgba(31, 41, 55, 0.3);
+}
+
+.document-table tr:hover td {
+    background-color: rgba(138, 43, 226, 0.1);
+}
+
+.status-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.status-pending {
+    background-color: rgba(138, 43, 226, 0.1);
+    color: var(--primary);
+}
+
+.status-approved {
+    background-color: rgba(0, 191, 166, 0.1);
+    color: var(--accent);
+}
+
+.status-rejected {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: #F87171;
+}
+
+/* Section Reveal Animation */
+.reveal {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.8s ease;
+}
+
+.reveal.active {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Wallet Button Animation */
+#connectWallet {
+    transition: all 0.3s ease;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+}
+
+#connectWallet:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 6px 20px rgba(138, 43, 226, 0.4);
+}
+
+/* File Upload Animation */
+.file-upload-section input[type="file"] + div {
+    transition: all 0.3s ease;
+    background: rgba(138, 43, 226, 0.1);
+    border: 1px solid rgba(138, 43, 226, 0.2);
+}
+
+.file-upload-section input[type="file"]:not([disabled]) + div:hover {
+    background: rgba(138, 43, 226, 0.2);
+    transform: translateY(-2px);
+}
+
+/* Payment Button Loading State */
+.payment-loading {
+    transition: opacity 0.3s ease;
+}
+
+/* Service Grid Animation */
+.service-card {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: cardReveal 0.6s ease forwards;
+}
+
+@keyframes cardReveal {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Stagger service cards animation */
+.service-card:nth-child(1) { animation-delay: 0.1s; }
+.service-card:nth-child(2) { animation-delay: 0.2s; }
+.service-card:nth-child(3) { animation-delay: 0.3s; }
+.service-card:nth-child(4) { animation-delay: 0.4s; }

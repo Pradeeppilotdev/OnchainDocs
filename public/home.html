@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IDENTITY</title>
+    
+    <!-- Add favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238a2be2' stroke-width='2'><path d='M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6H4z'/><path d='M10 7h4M10 17h4M7 10v4M17 10v4' stroke-linecap='round'/></svg>">
+    
+    <!-- Stylesheets -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="./styles.css" rel="stylesheet">
+    
+    <!-- Three.js library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
+    <!-- Use ethers v6 -->
+    <script src="https://cdn.jsdelivr.net/npm/ethers@6.7.0/dist/ethers.umd.min.js" type="application/javascript"></script>
+    
+    <!-- Firebase libraries -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="./app.js"></script>
+    
+    <!-- Authentication check -->
+    <script>
+        // Check if user is authenticated, redirect to login if not
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(function() {
+                // Check Firebase auth
+                if (typeof firebase !== 'undefined' && firebase.apps.length > 0) {
+                    firebase.auth().onAuthStateChanged(function(user) {
+                        if (!user) {
+                            console.log('No authenticated user found. Redirecting to login page...');
+                            localStorage.removeItem('user');
+                            window.location.href = './login/login.html';
+                        } else {
+                            console.log('User authenticated:', user.email);
+                        }
+                    });
+                } else {
+                    console.error('Firebase not initialized');
+                    window.location.href = './login/login.html';
+                }
+            }, 1000); // Give Firebase time to initialize
+        });
+    </script>
+</head>
+<body class="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900 text-white">
+    <!-- 3D Background Canvas -->
+    <canvas id="bgCanvas" class="fixed top-0 left-0 w-full h-full -z-10"></canvas>
+    
+    <!-- Navbar -->
+    <nav class="border-b border-purple-900 backdrop-blur-md bg-opacity-60 bg-gray-900 fixed w-full z-50">
+        <div class="max-w-7xl mx-auto px-6 py-4">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-3">
+                    <div class="p-2 bg-purple-500/10 rounded-lg">
+                        <svg class="h-6 w-6 text-purple-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6H4z"/>
+                            <path d="M10 7h4M10 17h4M7 10v4M17 10v4" stroke-linecap="round"/>
+                        </svg>
+                    </div>
+                    <h1 class="text-2xl font-bold gradient-text">IDENTITY</h1>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <button id="connectWallet" onclick="connectWallet()" class="flex items-center space-x-2 px-4 py-2 rounded-lg transition-all">
+                        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4" />
+                            <path d="M3 5v14a2 2 0 0 0 2 2h16v-5" />
+                            <path d="M18 12h.01" />
+                        </svg>
+                        <span>Connect Wallet</span>
+                    </button>
+                    
+                    <button onclick="handleLogout()" class="flex items-center space-x-2 px-4 py-2 rounded-lg transition-all bg-red-500/10 hover:bg-red-500/20 border border-red-500/20">
+                        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                            <polyline points="16 17 21 12 16 7" />
+                            <line x1="21" y1="12" x2="9" y2="12" />
+                        </svg>
+                        <span>Logout</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- After Navbar -->
+    <div class="fixed top-16 left-0 right-0 z-40 px-6">
+        <div class="max-w-7xl mx-auto space-y-4">
+            <!-- Network Badge -->
+            <div id="networkBadge" class="bg-purple-900/50 border border-purple-500 rounded-lg p-4 hidden">
+                <p class="flex items-center justify-center text-purple-400">
+                    Connected to Sepolia Test Network
+                </p>
+            </div>
+
+            <!-- Error Alert -->
+            <div id="errorAlert" class="bg-red-900/50 border border-red-500 rounded-lg p-4 hidden">
+                <p class="text-red-400" id="errorText"></p>
+            </div>
+
+            <!-- Success Alert -->
+            <div id="successAlert" class="fixed inset-0 flex items-center justify-center z-50 px-6 hidden backdrop-blur-lg">
+                <div class="bg-white/50 border border-gray-300 rounded-lg p-4 shadow-md max-w-md mx-auto text-center">
+                    <div class="text-center">
+                        <!-- Content will be dynamically inserted here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hero Section -->
+    <section class="pt-40 pb-20 px-6 reveal">
+        <div class="max-w-7xl mx-auto text-center">
+            <h1 class="text-5xl md:text-6xl font-bold mb-6 fade-in">
+                Government Services on <span class="gradient-text">Blockchain</span>
+            </h1>
+            <p class="text-xl text-gray-400 mb-12 max-w-2xl mx-auto fade-in" style="animation-delay: 0.2s">
+                Experience seamless government services with secure blockchain payments. Fast, transparent, and efficient.
+            </p>
+            <div class="flex justify-center space-x-4 fade-in" style="animation-delay: 0.4s">
+                <a href="#services" class="px-8 py-3 rounded-lg font-semibold transition-all">
+                    Get Started
+                </a>
+                <a href="#learn-more" class="px-8 py-3 rounded-lg font-semibold transition-all bg-gray-800/50 hover:bg-gray-800/70 border border-purple-500/20">
+                    Learn More
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="py-20 px-6 bg-gray-800/50 reveal">
+        <div class="max-w-7xl mx-auto">
+            <h2 class="text-3xl font-bold text-center mb-12">Why Choose GovChain Pay?</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="p-6 bg-gray-800 rounded-lg transition-all hover:transform hover:scale-105">
+                    <div class="p-2 bg-purple-500/10 rounded-lg w-fit mb-4">
+                        <svg class="h-6 w-6 text-purple-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2">Secure Transactions</h3>
+                    <p class="text-gray-400">Blockchain-powered security ensures your payments are safe and transparent.</p>
+                </div>
+                <div class="p-6 bg-gray-800 rounded-lg transition-all hover:transform hover:scale-105">
+                    <div class="p-2 bg-purple-500/10 rounded-lg w-fit mb-4">
+                        <svg class="h-6 w-6 text-purple-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2">Lightning Fast</h3>
+                    <p class="text-gray-400">Quick processing times for all your government service payments.</p>
+                </div>
+                <div class="p-6 bg-gray-800 rounded-lg transition-all hover:transform hover:scale-105">
+                    <div class="p-2 bg-purple-500/10 rounded-lg w-fit mb-4">
+                        <svg class="h-6 w-6 text-purple-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2">Track Everything</h3>
+                    <p class="text-gray-400">Monitor all your transactions with complete transparency.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- Services Section -->
+    <section id="services" class="py-20 px-6 reveal">
+        <div class="max-w-7xl mx-auto">
+            <h2 class="text-3xl font-bold text-center mb-12">Available Services</h2>
+
+            
+            <!-- Error Alert -->
+            <div id="errorAlert" class="mb-8 bg-red-900/50 border-red-500 rounded-lg p-4 hidden">
+                <p class="text-red-400" id="errorText"></p>
+            </div>
+
+            <!-- Services Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
+                <!-- Electricity Service -->
+                <div class="service-card bg-gray-800 border border-gray-700 rounded-lg p-6">
+                    <div class="flex items-center space-x-3 mb-4">
+                        <div class="p-2 bg-purple-500/10 rounded-lg">
+                            <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-semibold">Electricity Board</h3>
+                    </div>
+                    <p class="text-gray-400 mb-4">Pay electricity bills and new connection fees</p>
+                    
+                    <!-- PAN Verification Section -->
+                    <div class="pan-verification-section mb-4">
+                        <label class="block text-sm text-gray-400 mb-2">Verify PAN Card</label>
+                        <div class="flex space-x-2">
+                            <input type="text" 
+                                   id="panInput-electricity" 
+                                   placeholder="Enter PAN (e.g., ABCDE1234F)" 
+                                   class="bg-gray-700 text-black rounded-lg px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                   maxlength="10"
+                                   pattern="[A-Z]{5}[0-9]{4}[A-Z]{1}">
+                            <button onclick="verifyPAN('electricity')"
+                                    id="verifyPanButton-electricity"
+                                    class="bg-purple-500 hover:bg-purple-600 px-4 py-2 rounded-lg text-sm transition-colors">
+                                Verify
+                            </button>
+                        </div>
+                        <div id="panVerificationResult-electricity" class="mt-2 text-sm hidden"></div>
+                    </div>
+                    
+                    <!-- PAN Details Section (Hidden by default) -->
+                    <div id="panDetails-electricity" class="mb-4 bg-gray-700/50 rounded-lg p-4 hidden">
+                        <h4 class="text-sm font-semibold text-purple-400 mb-2">Verified PAN Details</h4>
+                        <div class="grid grid-cols-2 gap-2 text-sm">
+                            <div class="text-gray-400">Name:</div>
+                            <div id="panName-electricity" class="text-white"></div>
+                            <div class="text-gray-400">DOB:</div>
+                            <div id="panDob-electricity" class="text-white"></div>
+                            <div class="text-gray-400">Address:</div>
+                            <div id="panAddress-electricity" class="text-white"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- File Upload Section (Initially Disabled) -->
+                    <div class="mb-4 file-upload-section" id="fileUploadSection-electricity">
+                        <label class="block text-sm text-gray-400 mb-2">Upload Certificate (PDF/Image)</label>
+                        <div class="relative">
+                            <input type="file" 
+                                   id="certificateFile-electricity"
+                                   class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                   accept=".pdf,.jpg,.jpeg,.png"
+                                   onchange="handleFileSelect(event, 'electricity')"
+                                   disabled>
+                            <div class="bg-gray-700 hover:bg-gray-600 text-white rounded-lg px-4 py-2 flex items-center justify-between opacity-50 cursor-not-allowed" id="fileUploadButton-electricity">
+                                <span id="fileName-electricity" class="text-sm">Choose file</span>
+                                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M12 4v16m-8-8h16"/>
+                                </svg>
+                            </div>
+                        </div>
+                        <div id="fileInfo-electricity" class="mt-2 text-sm text-gray-500"></div>
+                    </div>
+
+                    <!-- Payment Button (Initially Disabled) -->
+                    <div class="flex justify-between items-center">
+                        <span class="text-purple-400 font-semibold">0.001 ETH</span>
+                        <button onclick="handlePayment('electricity')"
+                                class="service-pay flex items-center space-x-2 bg-purple-500 hover:bg-purple-600 px-4 py-2 rounded-lg text-sm transition-colors opacity-50 cursor-not-allowed"
+                                id="payButton-electricity"
+                                disabled>
+                            <span class="payment-text">Pay Now</span>
+                            <div class="payment-loading hidden">
+                                <svg class="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Water Service -->
+                <div class="service-card bg-gray-800 border border-gray-700 rounded-lg p-6">
+                    <div class="flex items-center space-x-3 mb-4">
+                        <div class="p-2 bg-purple-500/10 rounded-lg">
+                            <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" />
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-semibold">Water Connection</h3>
+                    </div>
+                    <p class="text-gray-400 mb-4">Process water connection requests and pay bills</p>
+                    
+                    <!-- PAN Verification Section -->
+                    <div class="pan-verification-section mb-4">
+                        <label class="block text-sm text-gray-400 mb-2">Verify PAN Card</label>
+                        <div class="flex space-x-2">
+                            <input type="text" 
+                                   id="panInput-water" 
+                                   placeholder="Enter PAN (e.g., ABCDE1234F)" 
+                                   class="bg-gray-700 text-white rounded-lg px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                   maxlength="10"
+                                   pattern="[A-Z]{5}[0-9]{4}[A-Z]{1}">
+                            <button onclick="verifyPAN('water')"
+                                    id="verifyPanButton-water"
+                                    class="bg-purple-500 hover:bg-purple-600 px-4 py-2 rounded-lg text-sm transition-colors">
+                                Verify
+                            </button>
+                        </div>
+                        <div id="panVerificationResult-water" class="mt-2 text-sm hidden"></div>
+                    </div>
+                    
+                    <!-- PAN Details Section (Hidden by default) -->
+                    <div id="panDetails-water" class="mb-4 bg-gray-700/50 rounded-lg p-4 hidden">
+                        <h4 class="text-sm font-semibold text-purple-400 mb-2">Verified PAN Details</h4>
+                        <div class="grid grid-cols-2 gap-2 text-sm">
+                            <div class="text-gray-400">Name:</div>
+                            <div id="panName-water" class="text-white"></div>
+                            <div class="text-gray-400">DOB:</div>
+                            <div id="panDob-water" class="text-white"></div>
+                            <div class="text-gray-400">Address:</div>
+                            <div id="panAddress-water" class="text-white"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- File Upload Section (Initially Disabled) -->
+                    <div class="mb-4 file-upload-section" id="fileUploadSection-water">
+                        <label class="block text-sm text-gray-400 mb-2">Upload Certificate (PDF/Image)</label>
+                        <div class="relative">
+                            <input type="file" 
+                                   id="certificateFile-water"
+                                   class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                   accept=".pdf,.jpg,.jpeg,.png"
+                                   onchange="handleFileSelect(event, 'water')"
+                                   disabled>
+                            <div class="bg-gray-700 hover:bg-gray-600 text-white rounded-lg px-4 py-2 flex items-center justify-between opacity-50 cursor-not-allowed" id="fileUploadButton-water">
+                                <span id="fileName-water" class="text-sm">Choose file</span>
+                                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M12 4v16m-8-8h16"/>
+                                </svg>
+                            </div>
+                        </div>
+                        <div id="fileInfo-water" class="mt-2 text-sm text-gray-500"></div>
+                    </div>
+
+                    <!-- Payment Button (Initially Disabled) -->
+                    <div class="flex justify-between items-center">
+                        <span class="text-purple-400 font-semibold">0.0015 ETH</span>
+                        <button onclick="handlePayment('water')"
+                                class="service-pay flex items-center space-x-2 bg-purple-500 hover:bg-purple-600 px-4 py-2 rounded-lg text-sm transition-colors opacity-50 cursor-not-allowed"
+                                id="payButton-water"
+                                disabled>
+                            <span class="payment-text">Pay Now</span>
+                            <div class="payment-loading hidden">
+                                <svg class="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Building Permits -->
+                <div class="service-card bg-gray-800 border border-gray-700 rounded-lg p-6">
+                    <div class="flex items-center space-x-3 mb-4">
+                        <div class="p-2 bg-purple-500/10 rounded-lg">
+                            <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                                <polyline points="9 22 9 12 15 12 15 22" />
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-semibold">Building Permits</h3>
+                    </div>
+                    <p class="text-gray-400 mb-4">Apply and pay for construction permits</p>
+                    
+                    <!-- PAN Verification Section -->
+                    <div class="pan-verification-section mb-4">
+                        <label class="block text-sm text-gray-400 mb-2">Verify PAN Card</label>
+                        <div class="flex space-x-2">
+                            <input type="text" 
+                                   id="panInput-building" 
+                                   placeholder="Enter PAN (e.g., ABCDE1234F)" 
+                                   class="bg-gray-700 text-white rounded-lg px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                   maxlength="10"
+                                   pattern="[A-Z]{5}[0-9]{4}[A-Z]{1}">
+                            <button onclick="verifyPAN('building')"
+                                    id="verifyPanButton-building"
+                                    class="bg-purple-500 hover:bg-purple-600 px-4 py-2 rounded-lg text-sm transition-colors">
+                                Verify
+                            </button>
+                        </div>
+                        <div id="panVerificationResult-building" class="mt-2 text-sm hidden"></div>
+                    </div>
+                    
+                    <!-- PAN Details Section (Hidden by default) -->
+                    <div id="panDetails-building" class="mb-4 bg-gray-700/50 rounded-lg p-4 hidden">
+                        <h4 class="text-sm font-semibold text-purple-400 mb-2">Verified PAN Details</h4>
+                        <div class="grid grid-cols-2 gap-2 text-sm">
+                            <div class="text-gray-400">Name:</div>
+                            <div id="panName-building" class="text-white"></div>
+                            <div class="text-gray-400">DOB:</div>
+                            <div id="panDob-building" class="text-white"></div>
+                            <div class="text-gray-400">Address:</div>
+                            <div id="panAddress-building" class="text-white"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- File Upload Section (Initially Disabled) -->
+                    <div class="mb-4 file-upload-section" id="fileUploadSection-building">
+                        <label class="block text-sm text-gray-400 mb-2">Upload Certificate (PDF/Image)</label>
+                        <div class="relative">
+                            <input type="file" 
+                                   id="certificateFile-building"
+                                   class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                   accept=".pdf,.jpg,.jpeg,.png"
+                                   onchange="handleFileSelect(event, 'building')"
+                                   disabled>
+                            <div class="bg-gray-700 hover:bg-gray-600 text-white rounded-lg px-4 py-2 flex items-center justify-between opacity-50 cursor-not-allowed" id="fileUploadButton-building">
+                                <span id="fileName-building" class="text-sm">Choose file</span>
+                                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M12 4v16m-8-8h16"/>
+                                </svg>
+                            </div>
+                        </div>
+                        <div id="fileInfo-building" class="mt-2 text-sm text-gray-500"></div>
+                    </div>
+
+                    <!-- Payment Button (Initially Disabled) -->
+                    <div class="flex justify-between items-center">
+                        <span class="text-purple-400 font-semibold">0.002 ETH</span>
+                        <button onclick="handlePayment('building')"
+                                class="service-pay flex items-center space-x-2 bg-purple-500 hover:bg-purple-600 px-4 py-2 rounded-lg text-sm transition-colors opacity-50 cursor-not-allowed"
+                                id="payButton-building"
+                                disabled>
+                            <span class="payment-text">Pay Now</span>
+                            <div class="payment-loading hidden">
+                                <svg class="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Document Verification -->
+                <div class="service-card bg-gray-800 border border-gray-700 rounded-lg p-6">
+                    <div class="flex items-center space-x-3 mb-4">
+                        <div class="p-2 bg-purple-500/10 rounded-lg">
+                            <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                <polyline points="14 2 14 8 20 8" />
+                                <line x1="16" y1="13" x2="8" y2="13" />
+                                <line x1="16" y1="17" x2="8" y2="17" />
+                                <polyline points="10 9 9 9 8 9" />
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-semibold">Document Verification</h3>
+                    </div>
+                    <p class="text-gray-400 mb-4">Get official documents verified</p>
+                    
+                    <!-- PAN Verification Section -->
+                    <div class="pan-verification-section mb-4">
+                        <label class="block text-sm text-gray-400 mb-2">Verify PAN Card</label>
+                        <div class="flex space-x-2">
+                            <input type="text" 
+                                   id="panInput-document" 
+                                   placeholder="Enter PAN (e.g., ABCDE1234F)" 
+                                   class="bg-gray-700 text-white rounded-lg px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                   maxlength="10"
+                                   pattern="[A-Z]{5}[0-9]{4}[A-Z]{1}">
+                            <button onclick="verifyPAN('document')"
+                                    id="verifyPanButton-document"
+                                    class="bg-purple-500 hover:bg-purple-600 px-4 py-2 rounded-lg text-sm transition-colors">
+                                Verify
+                            </button>
+                        </div>
+                        <div id="panVerificationResult-document" class="mt-2 text-sm hidden"></div>
+                    </div>
+                    
+                    <!-- PAN Details Section (Hidden by default) -->
+                    <div id="panDetails-document" class="mb-4 bg-gray-700/50 rounded-lg p-4 hidden">
+                        <h4 class="text-sm font-semibold text-purple-400 mb-2">Verified PAN Details</h4>
+                        <div class="grid grid-cols-2 gap-2 text-sm">
+                            <div class="text-gray-400">Name:</div>
+                            <div id="panName-document" class="text-white"></div>
+                            <div class="text-gray-400">DOB:</div>
+                            <div id="panDob-document" class="text-white"></div>
+                            <div class="text-gray-400">Address:</div>
+                            <div id="panAddress-document" class="text-white"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- File Upload Section (Initially Disabled) -->
+                    <div class="mb-4 file-upload-section" id="fileUploadSection-document">
+                        <label class="block text-sm text-gray-400 mb-2">Upload Certificate (PDF/Image)</label>
+                        <div class="relative">
+                            <input type="file" 
+                                   id="certificateFile-document"
+                                   class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                   accept=".pdf,.jpg,.jpeg,.png"
+                                   onchange="handleFileSelect(event, 'document')"
+                                   disabled>
+                            <div class="bg-gray-700 hover:bg-gray-600 text-white rounded-lg px-4 py-2 flex items-center justify-between opacity-50 cursor-not-allowed" id="fileUploadButton-document">
+                                <span id="fileName-document" class="text-sm">Choose file</span>
+                                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M12 4v16m-8-8h16"/>
+                                </svg>
+                            </div>
+                        </div>
+                        <div id="fileInfo-document" class="mt-2 text-sm text-gray-500"></div>
+                    </div>
+
+                    <!-- Payment Button (Initially Disabled) -->
+                    <div class="flex justify-between items-center">
+                        <span class="text-purple-400 font-semibold">0.0005 ETH</span>
+                        <button onclick="handlePayment('document')"
+                                class="service-pay flex items-center space-x-2 bg-purple-500 hover:bg-purple-600 px-4 py-2 rounded-lg text-sm transition-colors opacity-50 cursor-not-allowed"
+                                id="payButton-document"
+                                disabled>
+                            <span class="payment-text">Pay Now</span>
+                            <div class="payment-loading hidden">
+                                <svg class="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="py-20 px-6 bg-gray-800/50 reveal">
+        <div class="max-w-7xl mx-auto">
+            <h2 class="text-3xl font-bold text-center mb-12">Your Uploaded Documents</h2>
+            
+            <!-- Document Status Table -->
+            <div class="overflow-x-auto">
+                <table class="w-full bg-gray-900 rounded-lg overflow-hidden">
+                    <thead class="bg-gray-800">
+                        <tr>
+                            <th class="px-6 py-4 text-left text-sm font-semibold text-gray-300">Service</th>
+                            <th class="px-6 py-4 text-left text-sm font-semibold text-gray-300">File Name</th>
+                            <th class="px-6 py-4 text-left text-sm font-semibold text-gray-300">Status</th>
+                            <th class="px-6 py-4 text-left text-sm font-semibold text-gray-300">IPFS Hash</th>
+                            <th class="px-6 py-4 text-left text-sm font-semibold text-gray-300">Transaction</th>
+                            <th class="px-6 py-4 text-left text-sm font-semibold text-gray-300">Mint SBT</th>
+                            <th class="px-6 py-4 text-left text-sm font-semibold text-gray-300">Timestamp</th>
+                            <th class="px-6 py-4 text-left text-sm font-semibold text-gray-300">Remove</th>
+                        </tr>
+                    </thead>
+                    <tbody id="documentStatusTable">
+                        <!-- Table rows will be dynamically inserted here -->
+                    </tbody>
+                </table>
+                
+                <!-- Empty State -->
+                <div id="emptyState" class="text-center py-12 text-gray-400">
+                    <svg class="mx-auto h-12 w-12 mb-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                        <polyline points="14 2 14 8 20 8" />
+                        <line x1="16" y1="13" x2="8" y2="13" />
+                        <line x1="16" y1="17" x2="8" y2="17" />
+                    </svg>
+                    <p>No documents uploaded yet</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 border-t border-gray-800 py-12 px-6 reveal">
+        <div class="max-w-7xl mx-auto">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div class="space-y-4">
+                    <div class="flex items-center space-x-3">
+                        <div class="p-2 bg-purple-500/10 rounded-lg">
+                            <svg class="h-6 w-6 text-purple-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6H4z"/>
+                                <path d="M10 7h4M10 17h4M7 10v4M17 10v4" stroke-linecap="round"/>
+                            </svg>
+                        </div>
+                        <span class="text-xl font-bold">GovChain Pay</span>
+                    </div>
+                    <p class="text-gray-400">Revolutionizing government services through blockchain technology.</p>
+                </div>
+                <div>
+                    <h3 class="font-semibold mb-4">Quick Links</h3>
+                    <ul class="space-y-2 text-gray-400">
+                        <li><a href="#" class="hover:text-purple-400">Home</a></li>
+                        <li><a href="#services" class="hover:text-purple-400">Services</a></li>
+                        <li><a href="#" class="hover:text-purple-400">About Us</a></li>
+                        <li><a href="#" class="hover:text-purple-400">Contact</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="font-semibold mb-4">Support</h3>
+                    <ul class="space-y-2 text-gray-400">
+                        <li><a href="#" class="hover:text-purple-400">Help Center</a></li>
+                        <li><a href="#" class="hover:text-purple-400">Documentation</a></li>
+                        <li><a href="#" class="hover:text-purple-400">FAQs</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="font-semibold mb-4">Legal</h3>
+                    <ul class="space-y-2 text-gray-400">
+                        <li><a href="#" class="hover:text-purple-400">Privacy Policy</a></li>
+                        <li><a href="#" class="hover:text-purple-400">Terms of Service</a></li>
+                        <li><a href="#" class="hover:text-purple-400">Compliance</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="border-t border-gray-800 mt-12 pt-8 text-center text-gray-400">
+                <p>&copy; 2025 IDENTITY. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // CONTRACT_ADDRESS should match the address in app.js
+        const CONTRACT_ADDRESS = '0x8a8D3b51DD43d5673322ceA64f8957F2eca92ccD';
+    </script>
+    <!-- Load dependencies in correct order -->
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ethers@6.7.0/dist/ethers.umd.min.js" type="application/javascript"></script>
+    <script src="./app.js"></script>
+    <script src="debugPanel.js"></script>
+    <script>
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add input validation for PAN fields
+            const panInputs = document.querySelectorAll('[id^="panInput-"]');
+            panInputs.forEach(input => {
+                input.addEventListener('input', function() {
+                    this.value = this.value.toUpperCase();
+                });
+            });
+            
+            // Disable file upload and payment buttons initially
+            const fileInputs = document.querySelectorAll('[id^="certificateFile-"]');
+            fileInputs.forEach(input => {
+                input.disabled = true;
+            });
+            
+            const payButtons = document.querySelectorAll('[id^="payButton-"]');
+            payButtons.forEach(button => {
+                button.disabled = true;
+            });
+        });
+    </script>
+    <script>
+        // Initialize document updates
+        document.addEventListener('DOMContentLoaded', function() {
+            updateDocumentTable();
+            initializeDocumentUpdates();
+        });
+
+        // Refresh table every 30 seconds
+        setInterval(updateDocumentTable, 30000);
+    </script>
+    
+    <!-- Hidden Debug Panel - Can be shown with: document.getElementById('debugPanel').style.display = 'block' -->
+    <div id="debugPanel" class="fixed bottom-4 left-4 bg-gray-800 border border-gray-700 p-4 rounded-lg shadow-lg z-50" style="display: none;">
+        <h3 class="text-lg font-semibold mb-2">Debug Panel</h3>
+        <div class="space-y-2">
+            <button 
+                onclick="testFirebaseConnection()" 
+                class="w-full bg-purple-500 hover:bg-purple-600 px-4 py-2 rounded-lg text-sm">
+                Test Firebase Connection
+            </button>
+            <button 
+                onclick="createTestDocument()" 
+                class="w-full bg-green-500 hover:bg-green-600 px-4 py-2 rounded-lg text-sm">
+                Create Test Document
+            </button>
+            <button 
+                onclick="listAllDocuments()" 
+                class="w-full bg-yellow-500 hover:bg-yellow-600 px-4 py-2 rounded-lg text-sm">
+                List All Documents
+            </button>
+        </div>
+        <p class="mt-2 text-xs text-gray-400">Check browser console for results</p>
+    </div>
+    <script>
+        // Add this after your other scripts
+        document.addEventListener('DOMContentLoaded', function() {
+            // Test click handlers
+            const payButtons = document.querySelectorAll('[id^="payButton-"]');
+            payButtons.forEach(button => {
+                console.log(`Adding test click handler to ${button.id}`);
+                button.addEventListener('click', function() {
+                    console.log(`Button ${this.id} was clicked`);
+                });
+            });
+        });
+    </script>
+    
+    <!-- Logout handler -->
+    <script>
+        // Handle user logout
+        function handleLogout() {
+            // Show loading indicator or notification
+            document.getElementById('networkBadge').classList.remove('hidden');
+            document.getElementById('networkBadge').querySelector('p').textContent = 'Logging out...';
+            
+            // Firebase sign out
+            firebase.auth().signOut().then(() => {
+                console.log('User signed out from Firebase');
+                
+                // Clear all localStorage items
+                localStorage.removeItem('userLoggedIn');
+                localStorage.removeItem('userUid');
+                localStorage.removeItem('userName');
+                localStorage.removeItem('userEmail');
+                localStorage.removeItem('userRole');
+                localStorage.removeItem('user');
+                localStorage.removeItem('wallet');
+                localStorage.removeItem('walletAddress');
+                
+                // Clear any session cookies if applicable
+                document.cookie.split(";").forEach(function(c) { 
+                    document.cookie = c.replace(/^ +/, "").replace(/=.*/, 
+                        "=;expires=" + new Date().toUTCString() + ";path=/"); 
+                });
+                
+                // Redirect to login page
+                window.location.href = './login/login.html';
+            }).catch((error) => {
+                console.error('Error signing out:', error);
+                
+                // Show error
+                document.getElementById('errorAlert').classList.remove('hidden');
+                document.getElementById('errorText').textContent = 'Error signing out: ' + error.message;
+                
+                // Still attempt to redirect after a delay
+                setTimeout(() => {
+                    window.location.href = './login/login.html';
+                }, 2000);
+            });
+        }
+    </script>
+    
+    <!-- 3D Background Script -->
+    <script>
+        // Three.js background setup
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({
+            canvas: document.getElementById('bgCanvas'),
+            antialias: true,
+            alpha: true
+        });
+        
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        
+        // Create floating cubes with enhanced violet colors
+        const cubeGeometry = new THREE.BoxGeometry(1, 1, 1);
+        const cubeMaterial = new THREE.MeshPhongMaterial({
+            color: 0x8a2be2,
+            transparent: true,
+            opacity: 0.7,
+            shininess: 100,
+            specular: 0x9370db
+        });
+        
+        const cubes = [];
+        for (let i = 0; i < 30; i++) {
+            const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
+            cube.position.set(
+                Math.random() * 40 - 20,
+                Math.random() * 40 - 20,
+                Math.random() * 40 - 20
+            );
+            cube.rotation.set(
+                Math.random() * Math.PI,
+                Math.random() * Math.PI,
+                Math.random() * Math.PI
+            );
+            cube.scale.set(
+                Math.random() * 0.5 + 0.5,
+                Math.random() * 0.5 + 0.5,
+                Math.random() * 0.5 + 0.5
+            );
+            cubes.push(cube);
+            scene.add(cube);
+        }
+        
+        // Enhanced lighting for better violet effect
+        const ambientLight = new THREE.AmbientLight(0x8a2be2, 0.4);
+        scene.add(ambientLight);
+        
+        const directionalLight = new THREE.DirectionalLight(0x9370db, 0.6);
+        directionalLight.position.set(1, 1, 1);
+        scene.add(directionalLight);
+        
+        // Add point lights for more dynamic lighting
+        const pointLight1 = new THREE.PointLight(0x8a2be2, 0.5, 50);
+        pointLight1.position.set(10, 10, 10);
+        scene.add(pointLight1);
+        
+        const pointLight2 = new THREE.PointLight(0x9370db, 0.5, 50);
+        pointLight2.position.set(-10, -10, -10);
+        scene.add(pointLight2);
+        
+        // Enhanced starfield with violet tint
+        const starGeometry = new THREE.BufferGeometry();
+        const starMaterial = new THREE.PointsMaterial({
+            color: 0x9370db,
+            size: 0.15,
+            transparent: true,
+            opacity: 0.9,
+            blending: THREE.AdditiveBlending
+        });
+        
+        const starVertices = [];
+        for (let i = 0; i < 1500; i++) {
+            starVertices.push(
+                Math.random() * 200 - 100,
+                Math.random() * 200 - 100,
+                Math.random() * 200 - 100
+            );
+        }
+        
+        starGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starVertices, 3));
+        const stars = new THREE.Points(starGeometry, starMaterial);
+        scene.add(stars);
+        
+        camera.position.z = 30;
+        
+        // Smooth mouse movement effect
+        let mouseX = 0;
+        let mouseY = 0;
+        let targetX = 0;
+        let targetY = 0;
+        
+        document.addEventListener('mousemove', (event) => {
+            targetX = (event.clientX - window.innerWidth / 2) * 0.005;
+            targetY = (event.clientY - window.innerHeight / 2) * 0.005;
+        });
+        
+        // Animation loop with smooth transitions
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            // Smooth camera movement
+            mouseX += (targetX - mouseX) * 0.05;
+            mouseY += (targetY - mouseY) * 0.05;
+            
+            // Rotate cubes with smooth transitions
+            cubes.forEach(cube => {
+                cube.rotation.x += 0.005;
+                cube.rotation.y += 0.005;
+                cube.position.y += Math.sin(Date.now() * 0.001 + cube.position.x) * 0.01;
+            });
+            
+            // Move camera based on smoothed mouse position
+            camera.position.x += (mouseX - camera.position.x) * 0.05;
+            camera.position.y += (-mouseY - camera.position.y) * 0.05;
+            camera.lookAt(scene.position);
+            
+            // Animate point lights
+            pointLight1.position.x = Math.sin(Date.now() * 0.001) * 20;
+            pointLight1.position.y = Math.cos(Date.now() * 0.001) * 20;
+            pointLight2.position.x = Math.cos(Date.now() * 0.001) * 20;
+            pointLight2.position.y = Math.sin(Date.now() * 0.001) * 20;
+            
+            renderer.render(scene, camera);
+        }
+        
+        animate();
+        
+        // Handle window resize with smooth transition
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>

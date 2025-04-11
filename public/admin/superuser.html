@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IDENTITY- Admin Dashboard</title>
+    <link rel="stylesheet" href="superuser.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles/documents.css">
+    <link rel="stylesheet" href="styles/contracts.css">
+    <link rel="stylesheet" href="styles/settings.css">
+    
+    <!-- Add favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238a2be2' stroke-width='2'><path d='M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6H4z'/><path d='M10 7h4M10 17h4M7 10v4M17 10v4' stroke-linecap='round'/></svg>">
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
+    
+    <!-- Initialize Firebase -->
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyC1xpIBYJ9z8Xgwrt1RkZQffyPhtnAhY3c",
+            authDomain: "blocksmiths-a8021.firebaseapp.com",
+            databaseURL: "https://blocksmiths-a8021-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "blocksmiths-a8021",
+            storageBucket: "blocksmiths-a8021.firebasestorage.app",
+            messagingSenderId: "243684466522",
+            appId: "1:243684466522:web:8f1231b1e3831de1c99d63",
+            measurementId: "G-FVBSQRWGB1"
+        };
+        
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        
+        // Log successful initialization
+        console.log("Firebase initialized for admin dashboard");
+    </script>
+</head>
+<body>
+    <div class="container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">IDENTITY</div>
+                <span class="admin-badge">Admin</span>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <ul>
+                    <li class="active">
+                        <a onclick="showPage('dashboard'); return false;">
+                            <i class="uil uil-dashboard"></i> Dashboard
+                        </a>
+                    </li>
+                    <li>
+                        <a onclick="showPage('users'); return false;">
+                            <i class="uil uil-users-alt"></i> Users
+                        </a>
+                    </li>
+                    <li>
+                        <a onclick="showPage('documents'); return false;">
+                            <i class="uil uil-file-alt"></i> Documents
+                        </a>
+                    </li>
+                    <li>
+                        <a onclick="showPage('contracts'); return false;">
+                            <i class="uil uil-file-contract"></i> Contracts
+                        </a>
+                    </li>
+                    
+                    
+                </ul>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <a href="../index.html" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <header class="top-bar">
+                <div class="search-container">
+                    <i class="fas fa-search"></i>
+                    <input type="text" placeholder="Search...">
+                </div>
+                
+            </header>
+
+            <!-- Dashboard Overview Section -->
+            <section id="dashboard" class="dashboard-section active">
+                <h1 class="gradient-text">Dashboard Overview</h1>
+                
+                <div class="stats-cards">
+                    <div class="stat-card">
+                        <div class="stat-icon users">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stat-details">
+                            <h3>Total Users</h3>
+                            <p class="stat-number">1,254</p>
+                            <p class="stat-change positive"><i class="fas fa-arrow-up"></i> 12% this month</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon projects">
+                            <i class="fas fa-project-diagram"></i>
+                        </div>
+                        <div class="stat-details">
+                            <h3>Active Projects</h3>
+                            <p class="stat-number">42</p>
+                            <p class="stat-change positive"><i class="fas fa-arrow-up"></i> 8% this month</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon revenue">
+                            <i class="fas fa-dollar-sign"></i>
+                        </div>
+                        <div class="stat-details">
+                            <h3>Revenue</h3>
+                            <p class="stat-number">$125,400</p>
+                            <p class="stat-change positive"><i class="fas fa-arrow-up"></i> 23% this month</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon contracts">
+                            <i class="fas fa-file-contract"></i>
+                        </div>
+                        <div class="stat-details">
+                            <h3>Smart Contracts</h3>
+                            <p class="stat-number">87</p>
+                            <p class="stat-change negative"><i class="fas fa-arrow-down"></i> 5% this month</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="dashboard-grid">
+                    <div class="chart-container">
+                        <div class="chart-header">
+                            <h3>User Growth</h3>
+                            <div class="chart-actions">
+                                <button class="active">Weekly</button>
+                                <button>Monthly</button>
+                                <button>Yearly</button>
+                            </div>
+                        </div>
+                        <div class="chart" id="userGrowthChart">
+                            <!-- Chart will be rendered here by JS -->
+                            <div class="chart-placeholder">
+                                <div class="bar" style="height: 30%"></div>
+                                <div class="bar" style="height: 45%"></div>
+                                <div class="bar" style="height: 60%"></div>
+                                <div class="bar" style="height: 40%"></div>
+                                <div class="bar" style="height: 75%"></div>
+                                <div class="bar" style="height: 90%"></div>
+                                <div class="bar" style="height: 65%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="recent-activity">
+                        <h3>Recent Activity</h3>
+                        <ul class="activity-list">
+                            <li>
+                                <div class="activity-icon"><i class="fas fa-user-plus"></i></div>
+                                <div class="activity-details">
+                                    <p><strong>New User Registration</strong></p>
+                                    <p>John Doe registered a new account</p>
+                                    <p class="activity-time">2 minutes ago</p>
+                                </div>
+                            </li>
+                            <li>
+                                <div class="activity-icon"><i class="fas fa-code-branch"></i></div>
+                                <div class="activity-details">
+                                    <p><strong>New Contract Deployed</strong></p>
+                                    <p>NFT Marketplace contract deployed to mainnet</p>
+                                    <p class="activity-time">45 minutes ago</p>
+                                </div>
+                            </li>
+                            <li>
+                                <div class="activity-icon"><i class="fas fa-dollar-sign"></i></div>
+                                <div class="activity-details">
+                                    <p><strong>Payment Received</strong></p>
+                                    <p>Payment of $5,400 received for Project #42</p>
+                                    <p class="activity-time">1 hour ago</p>
+                                </div>
+                            </li>
+                            <li>
+                                <div class="activity-icon"><i class="fas fa-exclamation-triangle"></i></div>
+                                <div class="activity-details">
+                                    <p><strong>Security Alert</strong></p>
+                                    <p>Unusual login attempt detected</p>
+                                    <p class="activity-time">3 hours ago</p>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="recent-users">
+                    <div class="section-header">
+                        <h3>Recent Users</h3>
+                        <a href="#users" class="view-all">View All</a>
+                    </div>
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Joined</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>#1001</td>
+                                    <td>
+                                        <div class="user-info">
+                                            <img src="https://via.placeholder.com/30" alt="User">
+                                            <span>John Doe</span>
+                                        </div>
+                                    </td>
+                                    <td>john.doe@example.com</td>
+                                    <td>May 15, 2023</td>
+                                    <td><span class="status active">Active</span></td>
+                                    <td>
+                                        <div class="actions">
+                                            <button class="action-btn edit"><i class="fas fa-edit"></i></button>
+                                            <button class="action-btn delete"><i class="fas fa-trash"></i></button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>#1002</td>
+                                    <td>
+                                        <div class="user-info">
+                                            <img src="https://via.placeholder.com/30" alt="User">
+                                            <span>Jane Smith</span>
+                                        </div>
+                                    </td>
+                                    <td>jane.smith@example.com</td>
+                                    <td>May 16, 2023</td>
+                                    <td><span class="status active">Active</span></td>
+                                    <td>
+                                        <div class="actions">
+                                            <button class="action-btn edit"><i class="fas fa-edit"></i></button>
+                                            <button class="action-btn delete"><i class="fas fa-trash"></i></button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>#1003</td>
+                                    <td>
+                                        <div class="user-info">
+                                            <img src="https://via.placeholder.com/30" alt="User">
+                                            <span>Robert Johnson</span>
+                                        </div>
+                                    </td>
+                                    <td>robert.j@example.com</td>
+                                    <td>May 18, 2023</td>
+                                    <td><span class="status inactive">Inactive</span></td>
+                                    <td>
+                                        <div class="actions">
+                                            <button class="action-btn edit"><i class="fas fa-edit"></i></button>
+                                            <button class="action-btn delete"><i class="fas fa-trash"></i></button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Users Section -->
+            <section id="users" class="dashboard-section">
+                <h1 class="gradient-text">User Management</h1>
+                
+                <div class="section-actions">
+                    <div class="search-filter">
+                        <input type="text" placeholder="Search users...">
+                        <select>
+                            <option value="all">All Users</option>
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                            <option value="admin">Admins</option>
+                        </select>
+                    </div>
+                    <button class="primary-btn"><i class="fas fa-plus"></i> Add New User</button>
+                </div>
+                
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Role</th>
+                                <th>Joined</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>#1001</td>
+                                <td>
+                                    <div class="user-info">
+                                        <img src="https://via.placeholder.com/30" alt="User">
+                                        <span>John Doe</span>
+                                    </div>
+                                </td>
+                                <td>john.doe@example.com</td>
+                                <td>Developer</td>
+                                <td>May 15, 2023</td>
+                                <td><span class="status active">Active</span></td>
+                                <td>
+                                    <div class="actions">
+                                        <button class="action-btn view"><i class="fas fa-eye"></i></button>
+                                        <button class="action-btn edit"><i class="fas fa-edit"></i></button>
+                                        <button class="action-btn delete"><i class="fas fa-trash"></i></button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>#1002</td>
+                                <td>
+                                    <div class="user-info">
+                                        <img src="https://via.placeholder.com/30" alt="User">
+                                        <span>Jane Smith</span>
+                                    </div>
+                                </td>
+                                <td>jane.smith@example.com</td>
+                                <td>Designer</td>
+                                <td>May 16, 2023</td>
+                                <td><span class="status active">Active</span></td>
+                                <td>
+                                    <div class="actions">
+                                        <button class="action-btn view"><i class="fas fa-eye"></i></button>
+                                        <button class="action-btn edit"><i class="fas fa-edit"></i></button>
+                                        <button class="action-btn delete"><i class="fas fa-trash"></i></button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>#1003</td>
+                                <td>
+                                    <div class="user-info">
+                                        <img src="https://via.placeholder.com/30" alt="User">
+                                        <span>Robert Johnson</span>
+                                    </div>
+                                </td>
+                                <td>robert.j@example.com</td>
+                                <td>Client</td>
+                                <td>May 18, 2023</td>
+                                <td><span class="status inactive">Inactive</span></td>
+                                <td>
+                                    <div class="actions">
+                                        <button class="action-btn view"><i class="fas fa-eye"></i></button>
+                                        <button class="action-btn edit"><i class="fas fa-edit"></i></button>
+                                        <button class="action-btn delete"><i class="fas fa-trash"></i></button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>#1004</td>
+                                <td>
+                                    <div class="user-info">
+                                        <img src="https://via.placeholder.com/30" alt="User">
+                                        <span>Emily Davis</span>
+                                    </div>
+                                </td>
+                                <td>emily.d@example.com</td>
+                                <td>Admin</td>
+                                <td>May 20, 2023</td>
+                                <td><span class="status active">Active</span></td>
+                                <td>
+                                    <div class="actions">
+                                        <button class="action-btn view"><i class="fas fa-eye"></i></button>
+                                        <button class="action-btn edit"><i class="fas fa-edit"></i></button>
+                                        <button class="action-btn delete"><i class="fas fa-trash"></i></button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>#1005</td>
+                                <td>
+                                    <div class="user-info">
+                                        <img src="https://via.placeholder.com/30" alt="User">
+                                        <span>Michael Wilson</span>
+                                    </div>
+                                </td>
+                                <td>michael.w@example.com</td>
+                                <td>Developer</td>
+                                <td>May 22, 2023</td>
+                                <td><span class="status active">Active</span></td>
+                                <td>
+                                    <div class="actions">
+                                        <button class="action-btn view"><i class="fas fa-eye"></i></button>
+                                        <button class="action-btn edit"><i class="fas fa-edit"></i></button>
+                                        <button class="action-btn delete"><i class="fas fa-trash"></i></button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="pagination">
+                    <button class="page-btn"><i class="fas fa-chevron-left"></i></button>
+                    <button class="page-btn active">1</button>
+                    <button class="page-btn">2</button>
+                    <button class="page-btn">3</button>
+                    <span>...</span>
+                    <button class="page-btn">10</button>
+                    <button class="page-btn"><i class="fas fa-chevron-right"></i></button>
+                </div>
+            </section>
+
+            <!-- Documents Section -->
+            <section id="documents" class="dashboard-section">
+                <h1 class="gradient-text">Document Management</h1>
+                
+                <div class="section-actions">
+                    <div class="search-filter">
+                        <div class="search-box">
+                            <i class="fas fa-search"></i>
+                            <input type="text" placeholder="Search documents..." id="documentSearch">
+                        </div>
+                        <select id="statusFilter">
+                            <option value="all">All Documents</option>
+                            <option value="Pending Review">Pending Review</option>
+                            <option value="Approved">Approved</option>
+                            <option value="Rejected">Rejected</option>
+                        </select>
+                    </div>
+                    <button class="refresh-btn" onclick="loadDocuments()">
+                        <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
+                </div>
+                
+                <p class="document-info" style="color: white; font-size: 14px; margin: 10px 0;">
+                    Documents are paginated to improve performance. Large documents will be loaded on-demand.
+                </p>
+                
+                <div class="documents-container">
+                    <div class="documents-grid">
+                        <!-- Documents will be dynamically inserted here -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Contracts Section -->
+            <section id="contracts" class="dashboard-section">
+                <h1 class="gradient-text">Smart Contracts</h1>
+                
+                <div class="section-actions">
+                    <div class="search-filter">
+                        <input type="text" placeholder="Search contracts...">
+                        <select>
+                            <option value="all">All Networks</option>
+                            <option value="ethereum">Ethereum</option>
+                            <option value="polygon">Polygon</option>
+                            <option value="solana">Solana</option>
+                            <option value="binance">Binance Smart Chain</option>
+                        </select>
+                    </div>
+                    <button class="primary-btn"><i class="fas fa-plus"></i> Deploy New Contract</button>
+                </div>
+                
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Contract Name</th>
+                                <th>Address</th>
+                                <th>Network</th>
+                                <th>Deployed Date</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <div class="contract-info">
+                                        <i class="fas fa-file-contract"></i>
+                                        <span>NFT Marketplace</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="address-container">
+                                        <span class="contract-address">0x7a2...3f9b</span>
+                                        <button class="copy-btn"><i class="fas fa-copy"></i></button>
+                                    </div>
+                                </td>
+                                <td>Ethereum</td>
+                                <td>May 15, 2023</td>
+                                <td><span class="status active">Verified</span></td>
+                                <td>
+                                    <div class="actions">
+                                        <button class="action-btn view"><i class="fas fa-eye"></i></button>
+                                        <button class="action-btn"><i class="fas fa-code"></i></button>
+                                        <button class="action-btn"><i class="fas fa-external-link-alt"></i></button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="contract-info">
+                                        <i class="fas fa-file-contract"></i>
+                                        <span>Token Contract</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="address-container">
+                                        <span class="contract-address">0x9c1...7e2d</span>
+                                        <button class="copy-btn"><i class="fas fa-copy"></i></button>
+                                    </div>
+                                </td>
+                                <td>Polygon</td>
+                                <td>May 20, 2023</td>
+                                <td><span class="status active">Verified</span></td>
+                                <td>
+                                    <div class="actions">
+                                        <button class="action-btn view"><i class="fas fa-eye"></i></button>
+                                        <button class="action-btn"><i class="fas fa-code"></i></button>
+                                        <button class="action-btn"><i class="fas fa-external-link-alt"></i></button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="contract-info">
+                                        <i class="fas fa-file-contract"></i>
+                                        <span>Staking Contract</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="address-container">
+                                        <span class="contract-address">0x3f5...8a1c</span>
+                                        <button class="copy-btn"><i class="fas fa-copy"></i></button>
+                                    </div>
+                                </td>
+                                <td>Binance Smart Chain</td>
+                                <td>May 25, 2023</td>
+                                <td><span class="status pending">Pending</span></td>
+                                <td>
+                                    <div class="actions">
+                                        <button class="action-btn view"><i class="fas fa-eye"></i></button>
+                                        <button class="action-btn"><i class="fas fa-code"></i></button>
+                                        <button class="action-btn"><i class="fas fa-external-link-alt"></i></button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="contract-info">
+                                        <i class="fas fa-file-contract"></i>
+                                        <span>DAO Governance</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="address-container">
+                                        <span class="contract-address">0x6d2...9f4e</span>
+                                        <button class="copy-btn"><i class="fas fa-copy"></i></button>
+                                    </div>
+                                </td>
+                                <td>Ethereum</td>
+                                <td>Jun 01, 2023</td>
+                                <td><span class="status active">Verified</span></td>
+                                <td>
+                                    <div class="actions">
+                                        <button class="action-btn view"><i class="fas fa-eye"></i></button>
+                                        <button class="action-btn"><i class="fas fa-code"></i></button>
+                                        <button class="action-btn"><i class="fas fa-external-link-alt"></i></button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="contract-details">
+                    <h2>Contract Details</h2>
+                    <div class="contract-tabs">
+                        <button class="tab-btn active">Overview</button>
+                        <button class="tab-btn">Code</button>
+                        <button class="tab-btn">Transactions</button>
+                        <button class="tab-btn">Events</button>
+                    </div>
+                    <div class="contract-content">
+                        <div class="contract-overview">
+                            <div class="detail-item">
+                                <span class="detail-label">Contract Name:</span>
+                                <span class="detail-value">NFT Marketplace</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Contract Address:</span>
+                                <span class="detail-value">0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Network:</span>
+                                <span class="detail-value">Ethereum Mainnet</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Compiler Version:</span>
+                                <span class="detail-value">Solidity 0.8.7</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Optimization:</span>
+                                <span class="detail-value">Enabled with 200 runs</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Deployed Date:</span>
+                                <span class="detail-value">May 15, 2023 at 14:30:45 UTC</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Transaction Hash:</span>
+                                <span class="detail-value">0x8a6b8f2d9b5d7e8c9a4b3c2d1e0f9a8b7c6d5e4f3a2b1c0d9e8f7a6b5c4d3e2f1</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="js/documents.js"></script>
+    <script src="js/contracts.js"></script>
+    <script src="js/settings.js"></script>
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="superuser.js"></script>
+    <script>
+        // Add this to check if documents are loading
+        console.log('Initial documents:', JSON.parse(localStorage.getItem('adminDocuments') || '[]'));
+        
+        // Debug function to check memory usage
+        function checkMemoryUsage() {
+            if (window.performance && window.performance.memory) {
+                const memoryInfo = window.performance.memory;
+                console.log('Memory usage stats:');
+                console.log(`- Total JS heap size: ${(memoryInfo.totalJSHeapSize / (1024 * 1024)).toFixed(2)}MB`);
+                console.log(`- JS heap size limit: ${(memoryInfo.jsHeapSizeLimit / (1024 * 1024)).toFixed(2)}MB`);
+                console.log(`- Used JS heap size: ${(memoryInfo.usedJSHeapSize / (1024 * 1024)).toFixed(2)}MB`);
+                
+                const usagePercentage = (memoryInfo.usedJSHeapSize / memoryInfo.jsHeapSizeLimit) * 100;
+                console.log(`- Heap usage: ${usagePercentage.toFixed(2)}%`);
+                
+                // Log localStorage usage
+                let localStorageSize = 0;
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    const value = localStorage.getItem(key);
+                    localStorageSize += key.length + value.length;
+                }
+                
+                console.log(`localStorage usage: ${(localStorageSize / (1024 * 1024)).toFixed(2)}MB`);
+                
+                // If we have adminDocuments in memory, log its size too
+                if (window.adminDocuments) {
+                    const adminDocsString = JSON.stringify(window.adminDocuments);
+                    console.log(`adminDocuments size in memory: ${(adminDocsString.length / (1024 * 1024)).toFixed(2)}MB`);
+                }
+            } else {
+                console.log('Performance API memory info not available in this browser');
+            }
+        }
+        
+        // Run memory check when loaded and after documents are loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(checkMemoryUsage, 2000); // Check after 2 seconds
+        });
+        
+        // Add a global error handler for localStorage quota errors
+        window.addEventListener('error', function(e) {
+            if (e.message && e.message.includes('exceeded the quota') && e.message.includes('localStorage')) {
+                console.error('localStorage quota exceeded. Using in-memory storage only.');
+                // Create a notification for the user
+                const notification = document.createElement('div');
+                notification.style.position = 'fixed';
+                notification.style.top = '20px';
+                notification.style.right = '20px';
+                notification.style.padding = '15px 20px';
+                notification.style.background = '#d32f2f';
+                notification.style.color = 'white';
+                notification.style.borderRadius = '4px';
+                notification.style.boxShadow = '0 2px 10px rgba(0,0,0,0.3)';
+                notification.style.zIndex = '9999';
+                notification.textContent = 'Storage limit exceeded. Some data will only be available in this session.';
+                
+                document.body.appendChild(notification);
+                
+                // Remove notification after 10 seconds
+                setTimeout(() => {
+                    notification.style.opacity = '0';
+                    notification.style.transition = 'opacity 0.5s';
+                    setTimeout(() => notification.remove(), 500);
+                }, 10000);
+            }
+        });
+    </script>
+</body>
+</html>

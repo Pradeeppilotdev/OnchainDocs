@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login - Blocksmiths</title>
+    <link rel="stylesheet" href="loginstyle.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="admin-login.js" defer></script>
+    <style>
+        /* Additional styles for admin login */
+        .admin-badge {
+            background: linear-gradient(45deg, #8a2be2, #9b4dff);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            margin-bottom: 20px;
+            display: inline-block;
+            box-shadow: 0 0 10px rgba(138, 43, 226, 0.4);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: bold;
+        }
+        
+        .security-notice {
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.7);
+            margin-top: 20px;
+            text-align: center;
+            max-width: 80%;
+            border-top: 1px solid rgba(138, 43, 226, 0.3);
+            padding-top: 15px;
+        }
+
+        /* Background animation */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, rgba(138, 43, 226, 0.1) 0%, rgba(10, 10, 26, 1) 100%);
+            z-index: -1;
+            animation: pulse 8s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.3; }
+            50% { opacity: 0.5; }
+            100% { opacity: 0.3; }
+        }
+
+        /* Ensure form is above 3D background */
+        .form_area {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Style for 3D canvas */
+        canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="form_area">
+            <span class="admin-badge">ADMIN AREA</span>
+            <p class="title">Admin Login</p>
+            <form>
+                <div class="form_group">
+                    <label class="sub_title" for="email">Email</label>
+                    <input placeholder="Enter your admin email" id="email" class="form_style" type="email">
+                </div>
+                <div class="form_group">
+                    <label class="sub_title" for="password">Password</label>
+                    <input placeholder="Enter your password" id="password" class="form_style" type="password">
+                </div>
+                <div>
+                    <button class="btn">LOGIN</button>
+                    <p>Return to <a class="link" href="..\index.html">Homepage</a></p>
+                </div>
+            </form>
+            
+            <p class="security-notice">
+                This area is restricted to authorized administrators only. 
+                All login attempts are logged and monitored.
+            </p>
+        </div>
+    </div>
+</body>
+</html> 

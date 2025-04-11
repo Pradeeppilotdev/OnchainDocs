@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <!-- Main CSS file -->
+    <link rel="stylesheet" href="loginstyle.css">
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Three.js for 3D background -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
+    <!-- Firebase App (the core Firebase SDK) is always required and must be listed first -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    
+    <!-- Add Firebase products that you want to use -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    
+    <!-- Initialize Firebase -->
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyC1xpIBYJ9z8Xgwrt1RkZQffyPhtnAhY3c",
+            authDomain: "blocksmiths-a8021.firebaseapp.com",
+            databaseURL: "https://blocksmiths-a8021-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "blocksmiths-a8021",
+            storageBucket: "blocksmiths-a8021.appspot.com",
+            messagingSenderId: "243684466522",
+            appId: "1:243684466522:web:8f1231b1e3831de1c99d63",
+            measurementId: "G-FVBSQRWGB1"
+        };
+        
+        // Initialize Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+            console.log("Firebase initialized successfully");
+        }
+        
+        // Immediately sign out any existing user to prevent auto-redirect
+        firebase.auth().signOut().then(() => {
+            console.log("Signed out existing user");
+            // Clear any cached user data in localStorage
+            localStorage.removeItem('userLoggedIn');
+            localStorage.removeItem('userUid');
+            localStorage.removeItem('userName');
+            localStorage.removeItem('userEmail');
+            localStorage.removeItem('userRole');
+            localStorage.removeItem('user');
+            localStorage.removeItem('wallet');
+            localStorage.removeItem('walletAddress');
+            console.log("Cleared local storage");
+        }).catch(error => {
+            console.error("Error signing out:", error);
+        });
+    </script>
+    
+    <!-- Embed critical CSS directly in the page -->
+    <style>
+        :root {
+            --primary-color: #8a2be2;
+            --secondary-color: #4b0082;
+            --accent-color: #9370db;
+            --text-color: white;
+            --light-bg: #1a1a2e;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background-color: #0a0a1a;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            min-height: 100vh;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+            overflow: hidden;
+        }
+        
+        .container {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-direction: column;
+          text-align: center;
+          width: 100%;
+          max-width: 500px;
+          padding: 20px;
+          margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .form_area {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          flex-direction: column;
+            background: rgba(26, 26, 46, 0.85);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+          height: auto;
+          width: 100%;
+          padding: 25px;
+            border: 2px solid rgba(138, 43, 226, 0.3);
+          border-radius: 15px;
+            box-shadow: 0 0 20px rgba(138, 43, 226, 0.3);
+        }
+        
+        .title {
+            color: #9370db;
+          font-weight: 900;
+            font-size: 2.5rem;
+          margin: 15px 0;
+          line-height: 1.2;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px rgba(147, 112, 219, 0.5);
+        }
+        
+        .sub_title {
+            color: #9370db;
+          font-weight: 600;
+          margin: 5px 0;
+          font-size: 15px;
+        }
+        
+        .form_group {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          margin: 12px 0;
+          width: 100%;
+        }
+        
+        form {
+          width: 100%;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+        }
+        
+        .form_style {
+          outline: none;
+            border: 2px solid rgba(138, 43, 226, 0.3);
+            background: rgba(26, 26, 46, 0.7);
+          width: 100%;
+          padding: 14px;
+            border-radius: 8px;
+          font-size: 15px;
+          box-sizing: border-box;
+          color: white;
+            transition: all 0.3s ease;
+        }
+        
+        .form_style::placeholder {
+            color: rgba(147, 112, 219, 0.7);
+        }
+        
+        .form_style:focus {
+            border-color: #8a2be2;
+            box-shadow: 0 0 0 2px rgba(138, 43, 226, 0.3);
+        }
+        
+        .btn {
+            padding: 12px 25px;
+            margin: 15px 0;
+            width: 200px;
+            font-size: 15px;
+            background: linear-gradient(45deg, #8a2be2, #9370db);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            color: white;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+        }
+        
+        .login-btn {
+            margin: 15px auto;
+            display: block;
+        }
+        
+        .link {
+            font-weight: 600;
+            color: #9370db;
+          padding: 5px;
+          text-decoration: none;
+          font-size: 15px;
+            transition: all 0.3s ease;
+            text-shadow: 0 0 5px rgba(147, 112, 219, 0.3);
+        }
+        
+        .link:hover {
+            color: #8a2be2;
+            text-shadow: 0 0 10px rgba(138, 43, 226, 0.5);
+        }
+        
+        p {
+            color: #9370db;
+          font-size: 15px;
+          line-height: 1.5;
+        }
+        
+        #bgCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+        
+        .status-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            max-width: 300px;
+        }
+        
+        .status-message {
+            background: rgba(26, 26, 46, 0.95);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 2px solid rgba(138, 43, 226, 0.3);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            color: #9370db;
+            box-shadow: 0 0 20px rgba(138, 43, 226, 0.3);
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        .status-message.error {
+            border-color: rgba(255, 0, 0, 0.3);
+            color: #ff6b6b;
+        }
+        
+        .status-message.success {
+            border-color: rgba(0, 255, 0, 0.3);
+            color: #00ff9d;
+        }
+        
+        .admin-section {
+            margin-top: 30px;
+            text-align: center;
+            padding-top: 20px;
+            border-top: 1px solid rgba(138, 43, 226, 0.3);
+        }
+        
+        .admin-text {
+            color: #9370db;
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            font-weight: 500;
+        }
+        
+        .admin-btn {
+            background: linear-gradient(45deg, #4b0082, #8a2be2);
+            width: 200px;
+            margin: 0 auto;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .admin-btn:hover {
+            background: transparent;
+            border-color: #4b0082;
+            transform: translateY(-2px);
+            box-shadow: 0 0 20px rgba(75, 0, 130, 0.5);
+        }
+        
+        .form_group:last-child {
+            align-items: center;
+        }
+    </style>
+    
+    <!-- Login script -->
+    <script src="login.js" defer></script>
+</head>
+<body>
+    <!-- 3D Background Canvas -->
+    <canvas id="bgCanvas"></canvas>
+    
+    <!-- Status Message Container -->
+    <div id="statusContainer" class="status-container"></div>
+    
+<div class="container">
+    <div class="form_area">
+        <p class="title">LOGIN</p>
+        <form action="">           
+            <div class="form_group">
+                <label class="sub_title" for="email">Email</label>
+                <input placeholder="Enter your email" id="email" class="form_style" type="email">
+            </div>
+            <div class="form_group">
+                <label class="sub_title" for="password">Password</label>
+                <input placeholder="Enter your password" id="password" class="form_style" type="password">
+            </div>
+            <div class="form_group">
+                <button class="btn login-btn" type="submit">LOGIN</button>
+            </div>
+            <p>Don't have an account? <a href="signup.html" class="link">Sign Up</a></p>
+            
+            <!-- Admin Login Section -->
+            <div class="admin-section">
+                <p class="admin-text">Are you an admin?</p>
+                <button class="btn admin-btn" type="button" onclick="window.location.href='admin-login.html'">ADMIN LOGIN</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+    <!-- 3D Background Script -->
+<script>
+        // Three.js background setup
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({
+            canvas: document.getElementById('bgCanvas'),
+            antialias: true,
+            alpha: true
+        });
+        
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        
+        // Create floating cubes with enhanced violet colors
+        const cubeGeometry = new THREE.BoxGeometry(1, 1, 1);
+        const cubeMaterial = new THREE.MeshPhongMaterial({
+            color: 0x8a2be2,
+            transparent: true,
+            opacity: 0.7,
+            shininess: 100,
+            specular: 0x9370db
+        });
+        
+        const cubes = [];
+        for (let i = 0; i < 30; i++) {
+            const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
+            cube.position.set(
+                Math.random() * 40 - 20,
+                Math.random() * 40 - 20,
+                Math.random() * 40 - 20
+            );
+            cube.rotation.set(
+                Math.random() * Math.PI,
+                Math.random() * Math.PI,
+                Math.random() * Math.PI
+            );
+            cube.scale.set(
+                Math.random() * 0.5 + 0.5,
+                Math.random() * 0.5 + 0.5,
+                Math.random() * 0.5 + 0.5
+            );
+            cubes.push(cube);
+            scene.add(cube);
+        }
+        
+        // Enhanced lighting for better violet effect
+        const ambientLight = new THREE.AmbientLight(0x8a2be2, 0.4);
+        scene.add(ambientLight);
+        
+        const directionalLight = new THREE.DirectionalLight(0x9370db, 0.6);
+        directionalLight.position.set(1, 1, 1);
+        scene.add(directionalLight);
+        
+        // Add point lights for more dynamic lighting
+        const pointLight1 = new THREE.PointLight(0x8a2be2, 0.5, 50);
+        pointLight1.position.set(10, 10, 10);
+        scene.add(pointLight1);
+        
+        const pointLight2 = new THREE.PointLight(0x9370db, 0.5, 50);
+        pointLight2.position.set(-10, -10, -10);
+        scene.add(pointLight2);
+        
+        // Enhanced starfield with violet tint
+        const starGeometry = new THREE.BufferGeometry();
+        const starMaterial = new THREE.PointsMaterial({
+            color: 0x9370db,
+            size: 0.15,
+            transparent: true,
+            opacity: 0.9,
+            blending: THREE.AdditiveBlending
+        });
+        
+        const starVertices = [];
+        for (let i = 0; i < 1500; i++) {
+            starVertices.push(
+                Math.random() * 200 - 100,
+                Math.random() * 200 - 100,
+                Math.random() * 200 - 100
+            );
+        }
+        
+        starGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starVertices, 3));
+        const stars = new THREE.Points(starGeometry, starMaterial);
+        scene.add(stars);
+        
+        camera.position.z = 30;
+        
+        // Smooth mouse movement effect
+        let mouseX = 0;
+        let mouseY = 0;
+        let targetX = 0;
+        let targetY = 0;
+        
+        document.addEventListener('mousemove', (event) => {
+            targetX = (event.clientX - window.innerWidth / 2) * 0.005;
+            targetY = (event.clientY - window.innerHeight / 2) * 0.005;
+        });
+        
+        // Animation loop with smooth transitions
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            // Smooth camera movement
+            mouseX += (targetX - mouseX) * 0.05;
+            mouseY += (targetY - mouseY) * 0.05;
+            
+            // Rotate cubes with smooth transitions
+            cubes.forEach(cube => {
+                cube.rotation.x += 0.005;
+                cube.rotation.y += 0.005;
+                cube.position.y += Math.sin(Date.now() * 0.001 + cube.position.x) * 0.01;
+            });
+            
+            // Move camera based on smoothed mouse position
+            camera.position.x += (mouseX - camera.position.x) * 0.05;
+            camera.position.y += (-mouseY - camera.position.y) * 0.05;
+            camera.lookAt(scene.position);
+            
+            // Animate point lights
+            pointLight1.position.x = Math.sin(Date.now() * 0.001) * 20;
+            pointLight1.position.y = Math.cos(Date.now() * 0.001) * 20;
+            pointLight2.position.x = Math.cos(Date.now() * 0.001) * 20;
+            pointLight2.position.y = Math.sin(Date.now() * 0.001) * 20;
+            
+            renderer.render(scene, camera);
+        }
+        
+        animate();
+        
+        // Handle window resize with smooth transition
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+</script>
+</body> 
+</html>
