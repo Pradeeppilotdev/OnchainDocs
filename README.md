@@ -1,6 +1,6 @@
-# Blocksmiths
+# Identity
 
-Welcome to Blocksmiths! This project leverages blockchain technology to deliver fast, transparent, and secure payment solutions for government services through **GovChain Pay**. 
+Welcome to identity This project leverages blockchain technology to deliver fast, transparent, and secure payment solutions for government services through **GovChain Pay**. 
 
 ## Key Features
 
@@ -10,15 +10,15 @@ Welcome to Blocksmiths! This project leverages blockchain technology to deliver 
 
 ## Demo Links
 
-- **GitHub Repository:** [Blocksmiths](https://github.com/Pradeeppilotdev/Blocksmiths)
-- **Live Project:** [GovChain Pay](https://blocksmiths.vercel.app)
+- **GitHub Repository:** [Identity](https://github.com/Pradeeppilotdev/OnchainDocs)
+- **Live Project:** [Identity](https://onchain-docs.vercel.app/)
 
 ## Getting Started
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/Pradeeppilotdev/Blocksmiths.git
-   cd Blocksmiths
+   git clone https://github.com/Pradeeppilotdev/OnchainDocs.git
+   cd identity
 2. Install dependencies:
    ```bash
    npm install
@@ -32,11 +32,11 @@ Welcome to Blocksmiths! This project leverages blockchain technology to deliver 
 
    IPFS
 
-   OTP/OAUTH
+   OTP
 
    
 ## How It Works
-Users can make payments for government services using blockchain-based GovChain Pay.
+Users can make payments for government services using blockchain-based Identity.
 
 The system ensures security and transparency by utilizing decentralized ledgers.
 
@@ -49,7 +49,7 @@ Feel free to fork the repository and make contributions. Open a pull request if 
 This project is licensed under the MIT License. See the LICENSE file for details.
 
 ## Contact
-For more information or collaboration, reach out to the Blocksmiths team through the repository's Issues tab or email us directly.
+For more information or collaboration, reach out to the identity team through the repository's Issues tab or email us directly.
 
-Start using GovChain Pay today and revolutionize the way you experience government services!
+Start using Identity today and revolutionize the way you experience government services!
    
