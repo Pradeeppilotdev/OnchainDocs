@@ -1,15 +1,35 @@
 // Signup form validation and Firebase authentication integration
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM Content Loaded, initializing signup form...');
+
+    // Initialize 3D background
+    const background = new Background3D();
+
     // Get form elements
     const signupForm = document.querySelector('form');
-    const nameInput = document.querySelector('input[type="text"]');
+    const nameInput = document.getElementById('name');
     const emailInput = document.getElementById('email');
-    const passwordInputs = document.querySelectorAll('input[type="password"]');
-    const passwordInput = passwordInputs[0];
-    const confirmPasswordInput = passwordInputs[1];
+    const passwordInput = document.getElementById('password');
+    const confirmPasswordInput = document.getElementById('confirmPassword');
     const signupButton = document.querySelector('.btn');
     const statusContainer = document.getElementById('statusContainer');
     
+    // Debug logging
+    console.log('Form elements:', {
+        signupForm: signupForm ? 'Found' : 'Not found',
+        nameInput: nameInput ? 'Found' : 'Not found',
+        emailInput: emailInput ? 'Found' : 'Not found',
+        passwordInput: passwordInput ? 'Found' : 'Not found',
+        confirmPasswordInput: confirmPasswordInput ? 'Found' : 'Not found',
+        signupButton: signupButton ? 'Found' : 'Not found'
+    });
+
+    // Check if all required elements exist
+    if (!signupForm || !nameInput || !emailInput || !passwordInput || !confirmPasswordInput || !signupButton) {
+        console.error('Required form elements not found. Please check the HTML structure.');
+        return;
+    }
+
     // Admin code field creation
     const adminCodeWrapper = document.createElement('div');
     adminCodeWrapper.className = 'form_group admin-code-wrapper';
@@ -44,13 +64,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const adminCheck = document.getElementById('adminCheck');
     const adminCodeInput = document.getElementById('adminCode');
     
-    adminCheck.addEventListener('change', function() {
-        adminCodeWrapper.style.display = this.checked ? 'block' : 'none';
-    });
-
-    // Add IDs to make reference easier if not already set
-    if (!nameInput.id) nameInput.id = 'name';
-    if (!confirmPasswordInput.id) confirmPasswordInput.id = 'confirmPassword';
+    if (adminCheck) {
+        adminCheck.addEventListener('change', function() {
+            adminCodeWrapper.style.display = this.checked ? 'block' : 'none';
+        });
+    }
 
     // Verify Firebase is initialized
     if (!firebase || !firebase.apps.length) {
@@ -61,30 +79,85 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Form submission handler
-    signupForm.addEventListener('submit', function(event) {
+    signupForm.addEventListener('submit', async function(event) {
         event.preventDefault();
         
-        // Clear any previous status messages
-        clearStatusMessages();
+        // Get input values
+        const name = nameInput.value.trim();
+        const email = emailInput.value.trim();
+        const password = passwordInput.value;
+        const confirmPassword = confirmPasswordInput.value;
         
-        // Validate form before submission
-        if (validateForm()) {
-            const isAdminRegistration = adminCheck.checked;
-            const adminCode = adminCodeInput.value.trim();
+        // Validate inputs
+        if (!name || !email || !password || !confirmPassword) {
+            showMessage('Please fill in all fields', 'error');
+            return;
+        }
+        
+        if (password !== confirmPassword) {
+            showMessage('Passwords do not match', 'error');
+            return;
+        }
+
+        if (password.length < 6) {
+            showMessage('Password must be at least 6 characters long', 'error');
+            return;
+        }
+        
+        // Show loading state
+        signupButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating Account...';
+        signupButton.disabled = true;
+        
+        try {
+            // Create user with Firebase Auth
+            const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
             
-            // If admin registration, verify admin code
-            if (isAdminRegistration) {
-                // Admin code validation - change this to your secure admin code
-                const ADMIN_REGISTRATION_CODE = "blocksmiths2024";
-                
-                if (adminCode !== ADMIN_REGISTRATION_CODE) {
-                    showError(adminCodeInput, 'Invalid admin registration code');
-                    return;
-                }
+            // Update user profile with name
+            await userCredential.user.updateProfile({
+                displayName: name
+            });
+
+            // Store additional user data in Realtime Database
+            const userData = {
+                name: name,
+                email: email,
+                createdAt: firebase.database.ServerValue.TIMESTAMP
+            };
+
+            // Save user data to database
+            await firebase.database().ref('users/' + userCredential.user.uid).set(userData);
+            
+            // Show success message
+            showMessage('Account created successfully! Redirecting to login...', 'success');
+            
+            // Redirect to login page after a short delay
+            setTimeout(() => {
+                window.location.href = 'login.html';
+            }, 1500);
+        } catch (error) {
+            // Handle errors
+            let errorMessage = 'An error occurred during signup.';
+            
+            switch (error.code) {
+                case 'auth/email-already-in-use':
+                    errorMessage = 'This email is already registered.';
+                    break;
+                case 'auth/invalid-email':
+                    errorMessage = 'Please enter a valid email address.';
+                    break;
+                case 'auth/operation-not-allowed':
+                    errorMessage = 'Email/password accounts are not enabled.';
+                    break;
+                case 'auth/weak-password':
+                    errorMessage = 'Password is too weak.';
+                    break;
+                default:
+                    console.error('Signup error:', error);
             }
             
-            // If validation passes, register user in Firebase
-            registerUser(nameInput.value, emailInput.value, passwordInput.value, isAdminRegistration);
+            showMessage(errorMessage, 'error');
+            signupButton.innerHTML = 'SIGN UP';
+            signupButton.disabled = false;
         }
     });
 
@@ -115,8 +188,8 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!passwordInput.value) {
             showError(passwordInput, 'Please enter a password');
             isValid = false;
-        } else if (passwordInput.value.length < 8) {
-            showError(passwordInput, 'Password must be at least 8 characters long');
+        } else if (passwordInput.value.length < 6) {
+            showError(passwordInput, 'Password must be at least 6 characters long');
             isValid = false;
         } else if (!isStrongPassword(passwordInput.value)) {
             showError(passwordInput, 'Password must include uppercase, lowercase, number, and special character');
@@ -246,214 +319,33 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Function to register user in Firebase Authentication & Database
-    function registerUser(name, email, password, isAdmin = false) {
-        // Show loading state
-        const signupButton = document.querySelector('.btn');
-        const originalText = signupButton.textContent;
-        signupButton.textContent = 'Creating Account...';
-        signupButton.disabled = true;
-        
-        // Check for internet connection
-        if (!navigator.onLine) {
-            showStatusMessage('No internet connection. Please check your network and try again.', 'error');
-            signupButton.textContent = originalText;
-            signupButton.disabled = false;
-            return;
+    // Function to show message (success or error)
+    function showMessage(message, type) {
+        // Remove any existing messages
+        const existingMessage = document.querySelector('.message');
+        if (existingMessage) {
+            existingMessage.remove();
         }
         
-        // Normalize email consistently (always lowercase and trimmed)
-        const normalizedEmail = email.toLowerCase().trim();
+        // Create message element
+        const messageElement = document.createElement('div');
+        messageElement.className = `message ${type}`;
+        messageElement.textContent = message;
         
-        // Log to console for debugging
-        console.log("Attempting to create user with normalized email:", normalizedEmail);
-
-        // Check if user already exists in Auth before attempting to create
-        Promise.all([
-            // Check Firebase Auth
-            firebase.auth().fetchSignInMethodsForEmail(normalizedEmail)
-                .then(methods => methods && methods.length > 0)
-                .catch(() => false),
-                
-            // Check Database
-            firebase.database().ref('users').orderByChild('email').equalTo(normalizedEmail).once('value')
-                .then(snapshot => snapshot.exists())
-                .catch(() => false)
-        ])
-        .then(([existsInAuth, existsInDb]) => {
-            if (existsInAuth) {
-                // Email already in use in Auth
-                throw { code: 'auth/email-already-in-use', message: 'Email already in use in authentication system' };
-            }
-            
-            if (existsInDb) {
-                // Email exists in database but not in auth - might need recovery
-                console.log("Email exists in database but not in auth - offering recovery options");
-                
-                // If auth record is missing but DB record exists, offer recovery
-                const confirmRecreate = confirm(
-                    "This email exists in our database but doesn't have an authentication record. " +
-                    "Would you like to create a new authentication record with this password? " +
-                    "(Click Cancel to try a different email address)"
-                );
-                
-                if (!confirmRecreate) {
-                    throw { code: 'auth/email-already-in-use', message: 'Email already exists in database', handled: true };
-                }
-                
-                // User confirmed, proceed with creating auth record
-                console.log("User confirmed recreation of auth record for existing database email");
-            }
-            
-            // Create user in Firebase Authentication
-            return firebase.auth().createUserWithEmailAndPassword(normalizedEmail, password);
-        })
-        .then((userCredential) => {
-            // Get user from credentials
-            const user = userCredential.user;
-            
-            if (!user) {
-                throw new Error("User creation succeeded but user object is null");
-            }
-            
-            console.log("User created successfully with UID:", user.uid);
-            
-            // Update the user's display name
-            return user.updateProfile({
-                displayName: name
-            }).then(() => {
-                // Create user data object
-                const userData = {
-                    name: name,
-                    email: normalizedEmail, // Use normalized email
-                    role: isAdmin ? 'admin' : 'user',
-                    createdAt: firebase.database.ServerValue.TIMESTAMP,
-                    lastLogin: firebase.database.ServerValue.TIMESTAMP,
-                    authMethod: 'email_password',
-                    uid: user.uid // Store UID for cross-reference
-                };
-                
-                // Log the data being saved
-                console.log("Saving user data to database:", userData);
-                
-                // Save user data to Firebase Database
-                return firebase.database().ref('users/' + user.uid).set(userData);
-            });
-        })
-        .then(() => {
-            // Verify the user was created in Auth
-            const currentUser = firebase.auth().currentUser;
-            if (!currentUser) {
-                throw new Error("User not available after creation");
-            }
-            
-            // Send email verification
-            return currentUser.sendEmailVerification();
-        })
-        .then(() => {
-            // Double-check that user exists in database
-            const currentUser = firebase.auth().currentUser;
-            return firebase.database().ref('users/' + currentUser.uid).once('value')
-                .then(snapshot => {
-                    if (!snapshot.exists()) {
-                        // Create record if missing
-                        const userData = {
-                            name: name,
-                            email: normalizedEmail,
-                            role: isAdmin ? 'admin' : 'user',
-                            createdAt: firebase.database.ServerValue.TIMESTAMP,
-                            lastLogin: firebase.database.ServerValue.TIMESTAMP,
-                            authMethod: 'email_password',
-                            uid: currentUser.uid
-                        };
-                        return firebase.database().ref('users/' + currentUser.uid).set(userData);
-                    }
-                    return snapshot;
-                });
-        })
-        .then(() => {
-            // Update UI with success message
-            showStatusMessage('Account created successfully! Please check your email for verification.', 'success');
-            
-            // Store login state in localStorage
-            localStorage.setItem('userLoggedIn', 'true');
-            localStorage.setItem('userUid', firebase.auth().currentUser.uid);
-            localStorage.setItem('userName', name);
-            localStorage.setItem('userEmail', normalizedEmail);
-            localStorage.setItem('userRole', isAdmin ? 'admin' : 'user');
-            
-            // Create a log entry of the signup in a separate collection
-            const signupLog = {
-                email: normalizedEmail,
-                name: name,
-                timestamp: firebase.database.ServerValue.TIMESTAMP,
-                isAdmin: isAdmin,
-                method: 'email_password',
-                uid: firebase.auth().currentUser.uid
-            };
-            
-            // Add to signup logs
-            return firebase.database().ref('signupLogs').push(signupLog);
-        })
-        .then(() => {
-            // Log CSS status for debugging
-            const styles = document.querySelectorAll('link[rel="stylesheet"]');
-            styles.forEach(styleSheet => {
-                console.log(`CSS Load Status: ${styleSheet.href} - ${styleSheet.sheet ? 'Loaded' : 'Not Loaded'}`);
-            });
-            
-            // Redirect to appropriate page after short delay
-            signupButton.textContent = 'Success! Redirecting...';
-            setTimeout(() => {
-                if (isAdmin) {
-                    window.location.href = '../admin/superuser.html';
-                } else {
-                    window.location.href = '../login/login.html';
-                }
-            }, 2000);
-        })
-        .catch((error) => {
-            // Skip if already handled
-            if (error.handled) {
-                signupButton.textContent = originalText;
-                signupButton.disabled = false;
-                return;
-            }
-            
-            console.error('Signup error:', error);
-            
-            // Handle specific Firebase errors
-            let errorMessage = 'Registration failed: ' + error.message;
-            
-            switch (error.code) {
-                case 'auth/email-already-in-use':
-                    errorMessage = 'Email address is already in use. Please use a different email or try logging in.';
-                    break;
-                case 'auth/invalid-email':
-                    errorMessage = 'Invalid email format. Please enter a valid email address.';
-                    break;
-                case 'auth/weak-password':
-                    errorMessage = 'Password is too weak. Please choose a stronger password.';
-                    break;
-                case 'auth/network-request-failed':
-                    errorMessage = 'Network error. Please check your internet connection and try again.';
-                    break;
-                case 'auth/operation-not-allowed':
-                    errorMessage = 'Email/password accounts are not enabled. Please contact support.';
-                    break;
-                default:
-                    // If no specific error code but message contains specific text
-                    if (error.message && error.message.includes("already in use")) {
-                        errorMessage = 'Email address is already in use. Please try logging in instead.';
-                    }
-            }
-            
-            showStatusMessage(errorMessage, 'error');
-            
-            // Reset button
-            signupButton.textContent = originalText;
-            signupButton.disabled = false;
-        });
+        // Style based on message type
+        if (type === 'error') {
+            messageElement.style.color = '#ff6b6b';
+        } else {
+            messageElement.style.color = '#10b981';
+        }
+        
+        messageElement.style.marginTop = '15px';
+        messageElement.style.textAlign = 'center';
+        messageElement.style.width = '90%';
+        
+        // Insert message before the button container
+        const buttonContainer = signupButton.parentNode;
+        signupForm.insertBefore(messageElement, buttonContainer);
     }
 
     // Real-time validation for better user experience
@@ -478,8 +370,8 @@ document.addEventListener('DOMContentLoaded', function() {
     passwordInput.addEventListener('blur', function() {
         if (!this.value) {
             showError(this, 'Please enter a password');
-        } else if (this.value.length < 8) {
-            showError(this, 'Password must be at least 8 characters long');
+        } else if (this.value.length < 6) {
+            showError(this, 'Password must be at least 6 characters long');
         } else if (!isStrongPassword(this.value)) {
             showError(this, 'Password must include uppercase, lowercase, number, and special character');
         } else {
@@ -929,92 +821,4 @@ class Background3D {
 
         this.renderer.render(this.scene, this.camera);
     }
-}
-
-// Initialize 3D background
-document.addEventListener('DOMContentLoaded', function() {
-    const background = new Background3D();
-
-    // Get form elements
-    const signupForm = document.querySelector('form');
-    const nameInput = document.getElementById('name');
-    const emailInput = document.getElementById('email');
-    const passwordInput = document.getElementById('password');
-    const confirmPasswordInput = document.getElementById('confirmPassword');
-    const signupButton = document.querySelector('.btn');
-
-    // Form submission handler
-    signupForm.addEventListener('submit', function(event) {
-        event.preventDefault();
-        
-        // Get input values
-        const name = nameInput.value.trim();
-        const email = emailInput.value.trim();
-        const password = passwordInput.value;
-        const confirmPassword = confirmPasswordInput.value;
-        
-        // Validate inputs
-        if (!name || !email || !password || !confirmPassword) {
-            showMessage('Please fill in all fields', 'error');
-            return;
-        }
-        
-        if (password !== confirmPassword) {
-            showMessage('Passwords do not match', 'error');
-            return;
-        }
-        
-        // Show loading state
-        signupButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating Account...';
-        signupButton.disabled = true;
-        
-        // Simulate server verification delay (remove in production)
-        setTimeout(() => {
-            // Store user data in localStorage (replace with actual database in production)
-            const userData = {
-                name: name,
-                email: email,
-                password: password // Note: In production, never store passwords in localStorage
-            };
-            
-            localStorage.setItem('userData', JSON.stringify(userData));
-            
-            // Show success message
-            showMessage('Account created successfully! Redirecting to login...', 'success');
-            
-            // Redirect to login page after a short delay
-            setTimeout(() => {
-                window.location.href = 'login.html';
-            }, 1500);
-        }, 1000);
-    });
-    
-    // Function to show message (success or error)
-    function showMessage(message, type) {
-        // Remove any existing messages
-        const existingMessage = document.querySelector('.message');
-        if (existingMessage) {
-            existingMessage.remove();
-        }
-        
-        // Create message element
-        const messageElement = document.createElement('div');
-        messageElement.className = `message ${type}`;
-        messageElement.textContent = message;
-        
-        // Style based on message type
-        if (type === 'error') {
-            messageElement.style.color = '#ff6b6b';
-        } else {
-            messageElement.style.color = '#10b981';
-        }
-        
-        messageElement.style.marginTop = '15px';
-        messageElement.style.textAlign = 'center';
-        messageElement.style.width = '90%';
-        
-        // Insert message before the button container
-        const buttonContainer = signupButton.parentNode;
-        signupForm.insertBefore(messageElement, buttonContainer);
-    }
-}); 
+} 
